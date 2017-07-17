@@ -40,7 +40,7 @@ public final class TimerCmdLine {
 					.addOption(Command.Detail.getOption()).addOption(Command.Status.getOption());
 
 	public static void printHelp() {
-		new HelpFormatter().printHelp(CMDLINE_SYNTAX, CMDLINE_OPTIONS);
+		new HelpFormatter().printHelp(100, CMDLINE_SYNTAX, null, CMDLINE_OPTIONS, null, false);
 	}
 
 	@Getter
