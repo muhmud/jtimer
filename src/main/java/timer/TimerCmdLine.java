@@ -32,7 +32,7 @@ public final class TimerCmdLine {
 		private Option option;
 	}
 
-	private static final String CMDLINE_SYNTAX = "timer [-g <task> | -s | -c | -r | -t]";
+	private static final String CMDLINE_SYNTAX = "timer [-g <task> | -s | -c | -r | -t | -d]";
 	private static final Options CMDLINE_OPTIONS =
 			new Options().addOption(Command.Go.getOption()).addOption(Command.Stop.getOption())
 					.addOption(Command.Check.getOption()).addOption(Command.Summary.getOption())
