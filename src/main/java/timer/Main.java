@@ -40,7 +40,7 @@ public final class Main {
 			case Check:
 				System.out.println(timer.check());
 				break;
-			case Summary:
+			case Summary: {
 				Date start = null, end = null;
 				final String[] commandArgs = timerOptions.getArgs();
 				if (commandArgs != null && commandArgs.length > 0) {
@@ -63,6 +63,31 @@ public final class Main {
 					System.out.println(result.format());
 				}
 				break;
+			}
+			case Detail: {
+				Date start = null, end = null;
+				final String[] commandArgs = timerOptions.getArgs();
+				if (commandArgs != null && commandArgs.length > 0) {
+					final SimpleDateFormat dateFormat = new SimpleDateFormat(TimerCmdLine.DATE_FORMAT);
+					try {
+						start = dateFormat.parse(commandArgs[0]);
+						if (commandArgs.length > 1) {
+							end = dateFormat.parse(commandArgs[1]);
+						}
+					} catch (ParseException e) {
+						error("Start/End dates must be in yyyy-MM-dd format");
+					}
+
+					if (start != null && end != null && start.getTime() > end.getTime()) {
+						error("Start/End are wrong way round");
+					}
+				}
+				final List<TimerDetail> results = timer.detail(start, end);
+				for (TimerDetail result : results) {
+					System.out.println(result.format());
+				}
+				break;
+			}
 			case Status:
 				final TimerStatus timerStatus = timer.status();
 				if (timerStatus != null) {

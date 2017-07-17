@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -28,6 +27,7 @@ import timer.exception.BadStatusFileException;
 import timer.exception.NoTaskSpecifiedException;
 import timer.exception.TimerAlreadyRunningException;
 import timer.exception.TimerNotRunningException;
+import timer.lib.Dates;
 
 @AllArgsConstructor
 public final class Timer {
@@ -114,7 +114,7 @@ public final class Timer {
 			throw new TimerNotRunningException();
 		}
 
-		write(new TimerLog(latestTimerLog.getStart(), new Date(), null));
+		write(new TimerLog(latestTimerLog.getStart(), new Date(), latestTimerLog.getTask()));
 
 		writeStatus(null);
 	}
@@ -133,6 +133,54 @@ public final class Timer {
 		return "STOPPED";
 	}
 
+	public List<TimerDetail> detail(Date start, Date end) throws BadLogFileException {
+		final List<TimerDetail> result = new ArrayList<>();
+		final String logFilePath = logFilePath();
+		if (new File(logFilePath).exists()) {
+			final SortedMap<String, SortedMap<Date, Long>> tmpResults = new TreeMap<>();
+			try {
+				final Iterator<String> logLines = Files.lines(Paths.get(logFilePath)).iterator();
+				while (logLines.hasNext()) {
+					final TimerLog timerLog = TimerLog.parse(logLines.next());
+					if (timerLog != null && timerLog.getStart() != null && timerLog.getEnd() != null) {
+						if ((start == null || timerLog.getStart().getTime() >= start.getTime())
+								&& (end == null || timerLog.getStart().getTime() <= end.getTime())) {
+							String task = null;
+							if (timerLog.getTask() == null || timerLog.getTask().trim().equals("")
+									|| timerLog.getTask().toLowerCase().equals("null")) {
+								task = "<No Task>";
+							} else {
+								task = timerLog.getTask();
+							}
+
+							SortedMap<Date, Long> timeSpent = tmpResults.get(task);
+							if (timeSpent == null) {
+								timeSpent = new TreeMap<>();
+								tmpResults.put(task, timeSpent);
+							}
+
+							final Date date = Dates.toDate(timerLog.getStart());
+							Long current = timeSpent.get(date);
+							if (current == null) {
+								current = 0l;
+							}
+
+							current += (timerLog.getEnd().getTime() - timerLog.getStart().getTime()) / 1000;
+							timeSpent.put(date, current);
+						}
+					}
+				}
+
+				for (Map.Entry<String, SortedMap<Date, Long>> entry : tmpResults.entrySet()) {
+					result.add(new TimerDetail(entry.getKey(), entry.getValue()));
+				}
+			} catch (IOException e) {
+				throw new BadLogFileException();
+			}
+		}
+		return result;
+	}
+
 	public List<TimerSummary> summary(Date start, Date end) throws BadLogFileException {
 		final List<TimerSummary> result = new ArrayList<>();
 		final String logFilePath = logFilePath();
@@ -145,15 +193,7 @@ public final class Timer {
 					if (timerLog != null && timerLog.getStart() != null && timerLog.getEnd() != null) {
 						if ((start == null || timerLog.getStart().getTime() >= start.getTime())
 								&& (end == null || timerLog.getStart().getTime() <= end.getTime())) {
-							// Get the start date without any time part
-							final Calendar dateCalendar = Calendar.getInstance();
-							dateCalendar.setTime(timerLog.getStart());
-							dateCalendar.set(Calendar.HOUR_OF_DAY, 0);
-							dateCalendar.set(Calendar.MINUTE, 0);
-							dateCalendar.set(Calendar.SECOND, 0);
-							dateCalendar.set(Calendar.MILLISECOND, 0);
-
-							final Date date = dateCalendar.getTime();
+							final Date date = Dates.toDate(timerLog.getStart());
 							Long current = tmpResults.get(date);
 							if (current == null) {
 								current = 0l;

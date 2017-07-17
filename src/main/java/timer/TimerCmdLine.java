@@ -24,6 +24,8 @@ public final class TimerCmdLine {
 		Stop(new Option("s", "stop", false, "Stops the timer")),
 		Check(new Option("c", "check", false, "Checks the current status of the timer")),
 		Summary(OptionFactory.create("r", "summary", 2, true, "Generates a summary by day for a date range")),
+		Detail(OptionFactory.create("d", "detail", 2, true,
+				"Generates a detailed report by day for a date range")),
 		Status(new Option("t", "status", false, "Status of the timer"));
 
 		@Getter
@@ -31,9 +33,10 @@ public final class TimerCmdLine {
 	}
 
 	private static final String CMDLINE_SYNTAX = "timer [-g <task> | -s | -c | -r | -t]";
-	private static final Options CMDLINE_OPTIONS = new Options().addOption(Command.Go.getOption())
-			.addOption(Command.Stop.getOption()).addOption(Command.Check.getOption())
-			.addOption(Command.Summary.getOption()).addOption(Command.Status.getOption());
+	private static final Options CMDLINE_OPTIONS =
+			new Options().addOption(Command.Go.getOption()).addOption(Command.Stop.getOption())
+					.addOption(Command.Check.getOption()).addOption(Command.Summary.getOption())
+					.addOption(Command.Detail.getOption()).addOption(Command.Status.getOption());
 
 	public static void printHelp() {
 		new HelpFormatter().printHelp(CMDLINE_SYNTAX, CMDLINE_OPTIONS);
@@ -67,7 +70,7 @@ public final class TimerCmdLine {
 
 		final Option option = new MutuallyExclusiveOptionChecker().check(commandLine, Command.Go.getOption(),
 				Command.Stop.getOption(), Command.Check.getOption(), Command.Summary.getOption(),
-				Command.Status.getOption());
+				Command.Detail.getOption(), Command.Status.getOption());
 		if (option == null) {
 			return null;
 		}
@@ -80,12 +83,20 @@ public final class TimerCmdLine {
 				return new TimerCmdLine(Command.Stop, null, null);
 			case "c":
 				return new TimerCmdLine(Command.Check, null, null);
-			case "r":
+			case "r": {
 				final String[] commandArgs = getArgs(commandLine, option);
 				if (commandArgs != null && commandArgs.length > 2) {
 					return null;
 				}
 				return new TimerCmdLine(Command.Summary, null, commandArgs);
+			}
+			case "d": {
+				final String[] commandArgs = getArgs(commandLine, option);
+				if (commandArgs != null && commandArgs.length > 2) {
+					return null;
+				}
+				return new TimerCmdLine(Command.Detail, null, commandArgs);
+			}
 			case "t":
 				return new TimerCmdLine(Command.Status, null, null);
 			}

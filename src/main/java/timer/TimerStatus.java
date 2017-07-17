@@ -9,16 +9,14 @@ import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import timer.exception.BadStatusFileException;
+import timer.lib.Format;
 
 @AllArgsConstructor
 public final class TimerStatus {
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS Z";
 	private static final String LINE_FORMAT = "%s,%s\n";
-	private static final String STATUS_FORMAT = "%s - %s:%s:%s";
+	private static final String STATUS_FORMAT = "%s - %s";
 	private static final String NULL = "null";
-
-	private static final int SECONDS_MINUTE = 60;
-	private static final int SECONDS_HOUR = SECONDS_MINUTE * 60;
 
 	@Getter
 	private final String project;
@@ -26,23 +24,9 @@ public final class TimerStatus {
 	@Getter
 	private final Date start;
 
-	private static String format(long number) {
-		return String.format(number < 10 ? "0%d" : "%d", number);
-	}
-
 	public String format() {
-		final Date now = new Date();
-		long timeDifference = (now.getTime() - start.getTime()) / 1000;
-
-		final long hours = (timeDifference - (timeDifference % SECONDS_HOUR)) / SECONDS_HOUR;
-		timeDifference -= hours * SECONDS_HOUR;
-
-		final long minutes = (timeDifference - (timeDifference % SECONDS_MINUTE)) / SECONDS_MINUTE;
-		timeDifference -= minutes * SECONDS_MINUTE;
-
-		final long seconds = timeDifference;
-
-		return String.format(STATUS_FORMAT, project, format(hours), format(minutes), format(seconds));
+		return String.format(STATUS_FORMAT, project,
+				Format.formatInterval((new Date().getTime() - start.getTime()) / 1000));
 	}
 
 	public static TimerStatus parse(String statusLine) throws BadStatusFileException {
