@@ -8,9 +8,10 @@ import java.util.SortedMap;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import timer.lib.Format;
+import timer.lib.Formatted;
 
 @AllArgsConstructor
-public class TimerDetail {
+public class TimerDetail implements Formatted {
 	private static final int MAX_TASK_LENGTH = 64;
 	private static final String TASK_FORMAT = "\u001B[33m%s\u001B[0m";
 	private static final String DATE_FORMAT = "E dd MMM yyyy";

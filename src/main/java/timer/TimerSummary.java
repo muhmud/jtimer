@@ -6,9 +6,10 @@ import java.util.Date;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import timer.lib.Formatted;
 
 @AllArgsConstructor
-public class TimerSummary {
+public class TimerSummary implements Formatted {
 	private static final String DATE_FORMAT = "E dd MMM yyyy";
 	private static final String LINE_FORMAT = "%s: %s";
 

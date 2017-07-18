@@ -10,9 +10,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import timer.exception.BadStatusFileException;
 import timer.lib.Format;
+import timer.lib.Formatted;
 
 @AllArgsConstructor
-public final class TimerStatus {
+public final class TimerStatus implements Formatted {
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS Z";
 	private static final String LINE_FORMAT = "%s,%s\n";
 	private static final String STATUS_FORMAT = "%s - %s";
