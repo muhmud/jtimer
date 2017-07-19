@@ -119,6 +119,22 @@ public final class Timer {
 		writeStatus(null);
 	}
 
+	public void resume() throws BadLogFileException, TimerAlreadyRunningException, NoTaskSpecifiedException,
+			BadStatusFileException {
+		// Find the latest timer log entry
+		final TimerLog latestTimerLog = latestTimerLog();
+		if (latestTimerLog == null) {
+			throw new BadLogFileException();
+		}
+
+		if (latestTimerLog.getEnd() == null) {
+			throw new TimerAlreadyRunningException();
+		}
+
+		final String task = latestTimerLog.getTask();
+		start(task);
+	}
+
 	public String check() throws BadLogFileException {
 		// Find the latest timer log entry
 		final TimerLog latestTimerLog = latestTimerLog();

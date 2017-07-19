@@ -37,6 +37,7 @@ public final class Main {
 	private enum Command {
 		Go(new Option("g", "go", true, "Starts the timer for the specified task")),
 		Stop(new Option("s", "stop", false, "Stops the timer")),
+		Continue(new Option("i", "continue", false, "Resumes the timer with the last used task")),
 		Check(new Option("c", "check", false, "Checks the current status of the timer")),
 		Summary(OptionFactory.create("r", "summary", 2, true, "Generates a summary by day for a date range")),
 		Detail(OptionFactory.create("d", "detail", 2, true,
@@ -48,11 +49,11 @@ public final class Main {
 	}
 
 	private static final String CMDLINE_SYNTAX =
-			"timer [-g <task> | -s | -c | -r <start> <end> | -t | -d <start> <end>]";
-	private static final Options CMDLINE_OPTIONS =
-			new Options().addOption(Command.Go.getOption()).addOption(Command.Stop.getOption())
-					.addOption(Command.Check.getOption()).addOption(Command.Summary.getOption())
-					.addOption(Command.Detail.getOption()).addOption(Command.Status.getOption());
+			"timer [-g <task> | -s | -i | -c | -r <start> <end> | -t | -d <start> <end>]";
+	private static final Options CMDLINE_OPTIONS = new Options().addOption(Command.Go.getOption())
+			.addOption(Command.Stop.getOption()).addOption(Command.Continue.getOption())
+			.addOption(Command.Check.getOption()).addOption(Command.Summary.getOption())
+			.addOption(Command.Detail.getOption()).addOption(Command.Status.getOption());
 
 	private static void error(String msg) {
 		System.err.println(msg);
@@ -87,8 +88,8 @@ public final class Main {
 		}
 
 		final Option option = new MutuallyExclusiveOptionChecker().check(commandLine, Command.Go.getOption(),
-				Command.Stop.getOption(), Command.Check.getOption(), Command.Summary.getOption(),
-				Command.Detail.getOption(), Command.Status.getOption());
+				Command.Stop.getOption(), Command.Continue.getOption(), Command.Check.getOption(),
+				Command.Summary.getOption(), Command.Detail.getOption(), Command.Status.getOption());
 		if (option == null) {
 			return null;
 		}
@@ -99,6 +100,8 @@ public final class Main {
 				return new Main(Command.Go, getArg(commandLine, option));
 			case "s":
 				return new Main(Command.Stop);
+			case "i":
+				return new Main(Command.Continue);
 			case "c":
 				return new Main(Command.Check);
 			case "r":
@@ -177,6 +180,9 @@ public final class Main {
 				break;
 			case Stop:
 				timer.stop();
+				break;
+			case Continue:
+				timer.resume();
 				break;
 			case Check:
 				System.out.println(timer.check());
