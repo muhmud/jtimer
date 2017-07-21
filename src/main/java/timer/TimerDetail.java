@@ -13,26 +13,28 @@ import timer.lib.Formatted;
 @AllArgsConstructor
 public class TimerDetail implements Formatted {
 	private static final int MAX_TASK_LENGTH = 64;
-	private static final String TASK_FORMAT = "\u001B[33m%s\u001B[0m";
 	private static final String DATE_FORMAT = "E dd MMM yyyy";
-	private static final String LINE_FORMAT = "    %s            %s";
-	private static final String TOTAL = Format.pad("", 15);
+	private static final String LINE_FORMAT = "    %s   %s";
+	private static final String TOTAL = Format.pad("", MAX_TASK_LENGTH);
 
 	@Getter
-	private final String task;
+	private final Date date;
 
 	@Getter
-	private final SortedMap<Date, Long> timeSpent;
+	private final SortedMap<String, Long> timeSpent;
 
+	@Override
 	public String format() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append(String.format(TASK_FORMAT, Format.formatName(task, MAX_TASK_LENGTH)));
-		builder.append("\n");
 
 		final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+		builder.append(dateFormat.format(date));
+		builder.append("\n");
+
 		long total = 0l;
-		for (Map.Entry<Date, Long> entry : timeSpent.entrySet()) {
-			builder.append(String.format(LINE_FORMAT, dateFormat.format(entry.getKey()),
+		for (Map.Entry<String, Long> entry : timeSpent.entrySet()) {
+			builder.append(String.format(LINE_FORMAT,
+					Format.pad(Format.formatName(entry.getKey(), MAX_TASK_LENGTH), MAX_TASK_LENGTH),
 					Format.formatInterval(entry.getValue())));
 			builder.append("\n");
 

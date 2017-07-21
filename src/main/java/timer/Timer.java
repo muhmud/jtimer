@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -178,7 +176,7 @@ public final class Timer {
 		final List<TimerDetail> result = new ArrayList<>();
 		final String logFilePath = logFilePath();
 		if (new File(logFilePath).exists()) {
-			final SortedMap<String, SortedMap<Date, Long>> tmpResults = new TreeMap<>();
+			final SortedMap<Date, SortedMap<String, Long>> tmpResults = new TreeMap<>();
 			try {
 				final Iterator<String> logLines = Files.lines(Paths.get(logFilePath)).iterator();
 				while (logLines.hasNext()) {
@@ -194,25 +192,26 @@ public final class Timer {
 								task = timerLog.getTask();
 							}
 
-							SortedMap<Date, Long> timeSpent = tmpResults.get(task);
+							final Date date = Dates.toDate(timerLog.getStart());
+
+							SortedMap<String, Long> timeSpent = tmpResults.get(date);
 							if (timeSpent == null) {
 								timeSpent = new TreeMap<>();
-								tmpResults.put(task, timeSpent);
+								tmpResults.put(date, timeSpent);
 							}
 
-							final Date date = Dates.toDate(timerLog.getStart());
-							Long current = timeSpent.get(date);
+							Long current = timeSpent.get(task);
 							if (current == null) {
 								current = 0l;
 							}
 
 							current += (timerLog.getEnd().getTime() - timerLog.getStart().getTime()) / 1000;
-							timeSpent.put(date, current);
+							timeSpent.put(task, current);
 						}
 					}
 				}
 
-				for (Map.Entry<String, SortedMap<Date, Long>> entry : tmpResults.entrySet()) {
+				for (Map.Entry<Date, SortedMap<String, Long>> entry : tmpResults.entrySet()) {
 					result.add(new TimerDetail(entry.getKey(), entry.getValue()));
 				}
 			} catch (IOException e) {
@@ -246,8 +245,7 @@ public final class Timer {
 				}
 
 				for (Map.Entry<Date, Long> entry : tmpResults.entrySet()) {
-					result.add(new TimerSummary(entry.getKey(), BigDecimal.valueOf(entry.getValue())
-							.divide(BigDecimal.valueOf(3600), 2, RoundingMode.DOWN)));
+					result.add(new TimerSummary(entry.getKey(), entry.getValue()));
 				}
 			} catch (IOException e) {
 				throw new BadLogFileException();
