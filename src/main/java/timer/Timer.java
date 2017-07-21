@@ -40,8 +40,32 @@ public final class Timer {
 	@Getter
 	private final String statusDirectory;
 
+	private String logFilePath(boolean find) {
+		String logFilePath = Paths.get(directory, LOG_FILE).toString();
+
+		if (find) {
+			String directory = this.directory;
+			while (!new File(logFilePath).exists()) {
+				final String parentDirectory = new File(directory).getParent();
+				if (parentDirectory == null) {
+					logFilePath = null;
+					break;
+				}
+
+				logFilePath = Paths.get(parentDirectory, LOG_FILE).toString();
+			}
+		}
+
+		return logFilePath;
+	}
+
 	private String logFilePath() {
-		return Paths.get(directory, LOG_FILE).toString();
+		final String logFilePath = logFilePath(true);
+		if (logFilePath != null) {
+			return logFilePath;
+		}
+
+		return logFilePath(false);
 	}
 
 	private String statusFilePath() {
@@ -49,15 +73,16 @@ public final class Timer {
 	}
 
 	private String project() {
-		return java.nio.file.Paths.get(directory).getFileName().toString();
+		final String logFilePath = logFilePath();
+		return java.nio.file.Paths.get(new File(logFilePath).getParent()).getFileName().toString();
 	}
 
 	private TimerLog latestTimerLog() throws BadLogFileException {
-		final String logFilePath = logFilePath();
-		if (new File(logFilePath).exists()) {
+		final String logFilePath = logFilePath(true);
+		if (logFilePath != null) {
 			String logLine;
 			try (final ReversedLinesFileReader reader =
-					new ReversedLinesFileReader(new File(logFilePath()), StandardCharsets.UTF_8)) {
+					new ReversedLinesFileReader(new File(logFilePath), StandardCharsets.UTF_8)) {
 				do {
 					logLine = reader.readLine();
 				} while (logLine != null && logLine.length() == 0);
