@@ -26,6 +26,6 @@ public class TimerSummary implements Formatted {
 		final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 		final BigDecimal hours = BigDecimal.valueOf(time).divide(BigDecimal.valueOf(3600), 2, RoundingMode.DOWN);
 
-		return String.format(LINE_FORMAT, dateFormat.format(date), hours.toString(), Format.formatInterval(time));
+		return String.format(LINE_FORMAT, dateFormat.format(date), Format.formatInterval(time), hours.toString());
 	}
 }
