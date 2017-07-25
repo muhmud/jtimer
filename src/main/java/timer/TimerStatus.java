@@ -2,8 +2,6 @@ package timer;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import lombok.AllArgsConstructor;
@@ -14,7 +12,6 @@ import timer.lib.Formatted;
 
 @AllArgsConstructor
 public final class TimerStatus implements Formatted {
-	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS Z";
 	private static final String LINE_FORMAT = "%s,%s\n";
 	private static final String STATUS_FORMAT = "%s - %s";
 	private static final String NULL = "null";
@@ -25,6 +22,7 @@ public final class TimerStatus implements Formatted {
 	@Getter
 	private final Date start;
 
+	@Override
 	public String format() {
 		return String.format(STATUS_FORMAT, project,
 				Format.formatInterval((new Date().getTime() - start.getTime()) / 1000));
@@ -39,11 +37,10 @@ public final class TimerStatus implements Formatted {
 
 			final String project = parts[0].trim();
 
-			final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 			final Date start;
 			try {
-				start = dateFormat.parse(parts[1].trim());
-			} catch (ParseException e) {
+				start = new Date(Long.valueOf(parts[1].trim()));
+			} catch (Exception e) {
 				throw new BadStatusFileException();
 			}
 
@@ -55,9 +52,7 @@ public final class TimerStatus implements Formatted {
 
 	public static void write(FileWriter writer, String project, Date start) throws IOException {
 		if (start != null) {
-			final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-
-			writer.write(String.format(LINE_FORMAT, project, dateFormat.format(start)));
+			writer.write(String.format(LINE_FORMAT, project, start.getTime()));
 		} else {
 			writer.write(NULL);
 		}

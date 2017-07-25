@@ -44,13 +44,13 @@ public final class Timer {
 		if (find) {
 			String directory = this.directory;
 			while (!new File(logFilePath).exists()) {
-				final String parentDirectory = new File(directory).getParent();
-				if (parentDirectory == null) {
+				directory = new File(directory).getParent();
+				if (directory == null) {
 					logFilePath = null;
 					break;
 				}
 
-				logFilePath = Paths.get(parentDirectory, LOG_FILE).toString();
+				logFilePath = Paths.get(directory, LOG_FILE).toString();
 			}
 		}
 
