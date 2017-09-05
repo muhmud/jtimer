@@ -102,16 +102,18 @@ public final class Timer {
 		}
 	}
 
-	private void writeStatus(Date start) throws BadStatusFileException {
+	private void writeStatus(TimerStatus.Status status, Date anchor, Long workDone, Date start, Date end)
+			throws BadStatusFileException {
 		try (final FileWriter writer = new FileWriter(statusFilePath())) {
-			TimerStatus.write(writer, project(), start);
+			TimerStatus.write(writer, status, project(), new File(logFilePath(true)).getParent(), anchor, workDone,
+					start, end);
 		} catch (IOException e) {
 			throw new BadStatusFileException();
 		}
 	}
 
-	public void start(String task) throws NoTaskSpecifiedException, BadLogFileException, BadStatusFileException,
-			TimerAlreadyRunningException {
+	public void start(String task, boolean resume) throws NoTaskSpecifiedException, BadLogFileException,
+			BadStatusFileException, TimerAlreadyRunningException {
 		if (task == null || task.trim().length() == 0) {
 			throw new NoTaskSpecifiedException();
 		}
@@ -125,21 +127,60 @@ public final class Timer {
 		}
 
 		final Date start = new Date();
-		write(new TimerLog(start, null, task));
+		final Date anchor;
+		final Long workDone;
+		if (!resume) {
+			anchor = Dates.toDate(start);
+			workDone = 0l;
+		} else {
+			anchor = latestTimerLog.getAnchor();
 
-		writeStatus(start);
+			// Update the total amount of work done so far
+			final TimerStatus status = status();
+			if (status != null) {
+				workDone = status.getWorkDone()
+						+ (latestTimerLog.getEnd().getTime() - latestTimerLog.getStart().getTime());
+			} else {
+				workDone = 0l;
+			}
+		}
+
+		write(new TimerLog(anchor, start, null, task));
+		writeStatus(TimerStatus.Status.RUNNING, anchor, workDone, start, null);
 	}
 
-	public void stop() throws BadLogFileException, BadStatusFileException, TimerNotRunningException {
+	public void pause() throws BadLogFileException, BadStatusFileException, TimerNotRunningException {
 		// Find the latest timer log entry
 		final TimerLog latestTimerLog = latestTimerLog();
 		if (latestTimerLog == null || latestTimerLog.getEnd() != null) {
 			throw new TimerNotRunningException();
 		}
 
-		write(new TimerLog(latestTimerLog.getStart(), new Date(), latestTimerLog.getTask()));
+		final Date end = new Date();
+		write(new TimerLog(latestTimerLog.getAnchor(), latestTimerLog.getStart(), end, latestTimerLog.getTask()));
 
-		writeStatus(null);
+		writeStatus(TimerStatus.Status.PAUSED, latestTimerLog.getAnchor(), status().getWorkDone(),
+				latestTimerLog.getStart(), end);
+	}
+
+	public void stop() throws BadLogFileException, BadStatusFileException, TimerNotRunningException {
+		// Find the latest timer log entry
+		final TimerLog latestTimerLog = latestTimerLog();
+		if (latestTimerLog == null) {
+			throw new BadLogFileException();
+		}
+
+		final Date end;
+		if (latestTimerLog.getEnd() == null) {
+			end = new Date();
+			write(new TimerLog(latestTimerLog.getAnchor(), latestTimerLog.getStart(), end,
+					latestTimerLog.getTask()));
+		} else {
+			end = latestTimerLog.getEnd();
+		}
+
+		writeStatus(TimerStatus.Status.STOPPED, latestTimerLog.getAnchor(), status().getWorkDone(),
+				latestTimerLog.getStart(), end);
 	}
 
 	public void resume() throws BadLogFileException, TimerAlreadyRunningException, NoTaskSpecifiedException,
@@ -155,21 +196,17 @@ public final class Timer {
 		}
 
 		final String task = latestTimerLog.getTask();
-		start(task);
+		start(task, true);
 	}
 
-	public String check() throws BadLogFileException {
+	public String check() throws BadStatusFileException {
 		// Find the latest timer log entry
-		final TimerLog latestTimerLog = latestTimerLog();
-		if (latestTimerLog == null) {
+		final TimerStatus status = status();
+		if (status == null) {
 			return "FRESH";
 		}
 
-		if (latestTimerLog.getEnd() == null) {
-			return "RUNNING";
-		}
-
-		return "STOPPED";
+		return status.getStatus().name();
 	}
 
 	public List<TimerDetail> detail(Date start, Date end) throws BadLogFileException {
@@ -182,8 +219,8 @@ public final class Timer {
 				while (logLines.hasNext()) {
 					final TimerLog timerLog = TimerLog.parse(logLines.next());
 					if (timerLog != null && timerLog.getStart() != null && timerLog.getEnd() != null) {
-						if ((start == null || timerLog.getStart().getTime() >= start.getTime())
-								&& (end == null || timerLog.getStart().getTime() <= end.getTime())) {
+						if ((start == null || timerLog.getAnchor().getTime() >= start.getTime())
+								&& (end == null || timerLog.getAnchor().getTime() <= end.getTime())) {
 							String task = null;
 							if (timerLog.getTask() == null || timerLog.getTask().trim().equals("")
 									|| timerLog.getTask().toLowerCase().equals("null")) {
@@ -192,7 +229,7 @@ public final class Timer {
 								task = timerLog.getTask();
 							}
 
-							final Date date = Dates.toDate(timerLog.getStart());
+							final Date date = Dates.toDate(timerLog.getAnchor());
 
 							SortedMap<String, Long> timeSpent = tmpResults.get(date);
 							if (timeSpent == null) {
@@ -231,9 +268,9 @@ public final class Timer {
 				while (logLines.hasNext()) {
 					final TimerLog timerLog = TimerLog.parse(logLines.next());
 					if (timerLog != null && timerLog.getStart() != null && timerLog.getEnd() != null) {
-						if ((start == null || timerLog.getStart().getTime() >= start.getTime())
-								&& (end == null || timerLog.getStart().getTime() <= end.getTime())) {
-							final Date date = Dates.toDate(timerLog.getStart());
+						if ((start == null || timerLog.getAnchor().getTime() >= start.getTime())
+								&& (end == null || timerLog.getAnchor().getTime() <= end.getTime())) {
+							final Date date = Dates.toDate(timerLog.getAnchor());
 							Long current = tmpResults.get(date);
 							if (current == null) {
 								current = 0l;

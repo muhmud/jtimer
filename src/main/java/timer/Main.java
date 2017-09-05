@@ -37,23 +37,26 @@ public final class Main {
 	private enum Command {
 		Go(new Option("g", "go", true, "Starts the timer for the specified task")),
 		Stop(new Option("s", "stop", false, "Stops the timer")),
+		Pause(new Option("p", "pause", false, "Pauses the timer")),
 		Continue(new Option("i", "continue", false, "Resumes the timer with the last used task")),
 		Check(new Option("c", "check", false, "Checks the current status of the timer")),
 		Summary(OptionFactory.create("r", "summary", 2, true, "Generates a summary by day for a date range")),
 		Detail(OptionFactory.create("d", "detail", 2, true,
 				"Generates a detailed report by day for a date range")),
-		Status(new Option("t", "status", false, "Status of the timer"));
+		Status(new Option("t", "status", false, "Status of the timer")),
+		Directory(new Option("y", "directory", true, "Project directory"));
 
 		@Getter
 		private Option option;
 	}
 
 	private static final String CMDLINE_SYNTAX =
-			"timer [-g <task> | -s | -i | -c | -r <start> <end> | -t | -d <start> <end>]";
+			"timer [-y <directory>] [-g <task> | -s | -p | -i | -c | -r <start> <end> | -t | -d <start> <end>]";
 	private static final Options CMDLINE_OPTIONS = new Options().addOption(Command.Go.getOption())
-			.addOption(Command.Stop.getOption()).addOption(Command.Continue.getOption())
-			.addOption(Command.Check.getOption()).addOption(Command.Summary.getOption())
-			.addOption(Command.Detail.getOption()).addOption(Command.Status.getOption());
+			.addOption(Command.Stop.getOption()).addOption(Command.Pause.getOption())
+			.addOption(Command.Continue.getOption()).addOption(Command.Check.getOption())
+			.addOption(Command.Summary.getOption()).addOption(Command.Detail.getOption())
+			.addOption(Command.Status.getOption()).addOption(Command.Directory.getOption());
 
 	private static void error(String msg) {
 		System.err.println(msg);
@@ -88,28 +91,32 @@ public final class Main {
 		}
 
 		final Option option = new MutuallyExclusiveOptionChecker().check(commandLine, Command.Go.getOption(),
-				Command.Stop.getOption(), Command.Continue.getOption(), Command.Check.getOption(),
-				Command.Summary.getOption(), Command.Detail.getOption(), Command.Status.getOption());
+				Command.Stop.getOption(), Command.Pause.getOption(), Command.Continue.getOption(),
+				Command.Check.getOption(), Command.Summary.getOption(), Command.Detail.getOption(),
+				Command.Status.getOption());
 		if (option == null) {
 			return null;
 		}
 
+		final String directory = commandLine.getOptionValue("y");
 		if (option != null) {
 			switch (option.getOpt()) {
 			case "g":
-				return new Main(Command.Go, getArg(commandLine, option));
+				return new Main(Command.Go, getArg(commandLine, option), directory);
 			case "s":
-				return new Main(Command.Stop);
+				return new Main(Command.Stop, directory);
 			case "i":
-				return new Main(Command.Continue);
+				return new Main(Command.Continue, directory);
+			case "p":
+				return new Main(Command.Pause, directory);
 			case "c":
-				return new Main(Command.Check);
+				return new Main(Command.Check, directory);
 			case "r":
-				return new Main(Command.Summary, getArgs(commandLine, option, 2));
+				return new Main(Command.Summary, getArgs(commandLine, option, 2), directory);
 			case "d":
-				return new Main(Command.Detail, getArgs(commandLine, option, 2));
+				return new Main(Command.Detail, getArgs(commandLine, option, 2), directory);
 			case "t":
-				return new Main(Command.Status);
+				return new Main(Command.Status, directory);
 			}
 		}
 
@@ -122,9 +129,13 @@ public final class Main {
 	@Getter
 	private final String[] parameters;
 
-	private Main(Command command) {
+	@Getter
+	private final String directory;
+
+	private Main(Command command, String directory) {
 		this.command = command;
 		this.parameters = null;
+		this.directory = directory;
 	}
 
 	private String getParameter() {
@@ -170,16 +181,20 @@ public final class Main {
 			printHelp();
 		}
 
-		final Timer timer = new Timer(CURRENT_DIRECTORY, HOME_DIRECTORY);
+		final Timer timer = new Timer(
+				timerApp.getDirectory() == null ? CURRENT_DIRECTORY : timerApp.getDirectory(), HOME_DIRECTORY);
 
 		final Command command = timerApp.getCommand();
 		try {
 			switch (command) {
 			case Go:
-				timer.start(timerApp.getParameter());
+				timer.start(timerApp.getParameter(), false);
 				break;
 			case Stop:
 				timer.stop();
+				break;
+			case Pause:
+				timer.pause();
 				break;
 			case Continue:
 				timer.resume();
@@ -199,6 +214,8 @@ public final class Main {
 			}
 			case Status:
 				print(timer.status());
+				break;
+			default:
 				break;
 			}
 		} catch (BadLogFileException e) {
