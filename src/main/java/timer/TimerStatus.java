@@ -17,7 +17,7 @@ public final class TimerStatus implements Formatted {
 	private static final String NULL = "null";
 
 	public enum Status {
-		RUNNING, PAUSED, STOPPED
+		FRESH, RUNNING, PAUSED, STOPPED
 	}
 
 	@Getter
@@ -55,15 +55,19 @@ public final class TimerStatus implements Formatted {
 			}
 
 			int part = 0;
-			final String status = parts[part++].trim();
-			final String project = parts[part++].trim();
-			final String directory = parts[part++].trim();
 
+			final String status;
+			final String project;
+			final String directory;
 			final Date anchor;
 			final Long workDone;
 			final Date start;
 			final Date end;
 			try {
+				status = parts[part++].trim();
+				project = parts[part++].trim();
+				directory = parts[part++].trim();
+
 				anchor = new Date(Long.valueOf(parts[part++].trim()));
 				workDone = Long.valueOf(parts[part++].trim());
 				start = new Date(Long.valueOf(parts[part++].trim()));

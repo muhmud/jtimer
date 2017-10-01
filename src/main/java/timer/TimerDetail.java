@@ -13,7 +13,7 @@ import timer.lib.Formatted;
 @AllArgsConstructor
 public class TimerDetail implements Formatted {
 	private static final int MAX_TASK_LENGTH = 64;
-	private static final String DATE_FORMAT = "E dd MMM yyyy";
+	private static final String DATE_FORMAT = "E dd MMM yyyy (hh:mm)";
 	private static final String LINE_FORMAT = "    %s   %s";
 	private static final String TOTAL = Format.pad("", MAX_TASK_LENGTH);
 

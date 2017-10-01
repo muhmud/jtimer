@@ -19,6 +19,7 @@ import lombok.Getter;
 import timer.exception.BadLogFileException;
 import timer.exception.BadStatusFileException;
 import timer.exception.NoTaskSpecifiedException;
+import timer.exception.OtherTimerException;
 import timer.exception.TimerAlreadyRunningException;
 import timer.exception.TimerNotRunningException;
 import timer.lib.DateRange;
@@ -200,7 +201,7 @@ public final class Main {
 				timer.resume();
 				break;
 			case Check:
-				System.out.println(timer.check());
+				System.out.println(timer.check().name());
 				break;
 			case Summary: {
 				final DateRange dateRange = timerApp.getDateRangeParameter();
@@ -227,6 +228,8 @@ public final class Main {
 					Timer.STATUS_FILE));
 		} catch (TimerAlreadyRunningException e) {
 			error("The timer is already running");
+		} catch (OtherTimerException e) {
+			error("You're trying to operate on one timer when another is in operation. You can only use one timer at a time");
 		} catch (TimerNotRunningException e) {
 			error("The timer is not running");
 		} catch (NoTaskSpecifiedException e) {

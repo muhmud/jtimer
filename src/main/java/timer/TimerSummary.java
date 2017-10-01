@@ -12,7 +12,7 @@ import timer.lib.Formatted;
 
 @AllArgsConstructor
 public class TimerSummary implements Formatted {
-	private static final String DATE_FORMAT = "E dd MMM yyyy";
+	private static final String DATE_FORMAT = "E dd MMM yyyy (hh:mm)";
 	private static final String LINE_FORMAT = "%s:   \u001B[32m%s\u001B[0m (%s)";
 
 	@Getter
