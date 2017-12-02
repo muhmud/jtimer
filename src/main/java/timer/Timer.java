@@ -26,7 +26,6 @@ import timer.exception.NoTaskSpecifiedException;
 import timer.exception.OtherTimerException;
 import timer.exception.TimerAlreadyRunningException;
 import timer.exception.TimerNotRunningException;
-import timer.lib.Dates;
 
 @AllArgsConstructor
 public final class Timer {
