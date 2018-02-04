@@ -222,8 +222,8 @@ public final class Timer {
 				latestTimerLog.getStart(), end);
 	}
 
-	public void resume() throws BadLogFileException, TimerAlreadyRunningException, NoTaskSpecifiedException,
-			BadStatusFileException, OtherTimerException {
+	public void resume(String task) throws BadLogFileException, TimerAlreadyRunningException,
+			NoTaskSpecifiedException, BadStatusFileException, OtherTimerException {
 		// Find the latest timer log entry
 		final TimerLog latestTimerLog = latestTimerLog();
 		if (latestTimerLog == null) {
@@ -234,8 +234,8 @@ public final class Timer {
 			throw new TimerAlreadyRunningException();
 		}
 
-		final String task = latestTimerLog.getTask();
-		start(task, true);
+		final String newTask = task != null ? task : latestTimerLog.getTask();
+		start(newTask, true);
 	}
 
 	public TimerStatus.Status check() throws BadStatusFileException {
@@ -289,6 +289,47 @@ public final class Timer {
 
 				for (Map.Entry<Date, SortedMap<String, Long>> entry : tmpResults.entrySet()) {
 					result.add(new TimerDetail(entry.getKey(), entry.getValue()));
+				}
+			} catch (IOException e) {
+				throw new BadLogFileException();
+			}
+		}
+		return result;
+	}
+
+	public List<TimerTaskReport> task(Date start, Date end) throws BadLogFileException {
+		final List<TimerTaskReport> result = new ArrayList<>();
+		final String logFilePath = logFilePath();
+		if (new File(logFilePath).exists()) {
+			final SortedMap<String, Long> tmpResults = new TreeMap<>();
+			try {
+				final Iterator<String> logLines = Files.lines(Paths.get(logFilePath)).iterator();
+				while (logLines.hasNext()) {
+					final TimerLog timerLog = TimerLog.parse(logLines.next());
+					if (timerLog != null && timerLog.getStart() != null && timerLog.getEnd() != null) {
+						if ((start == null || timerLog.getAnchor().getTime() >= start.getTime())
+								&& (end == null || timerLog.getAnchor().getTime() <= end.getTime())) {
+							String task = null;
+							if (timerLog.getTask() == null || timerLog.getTask().trim().equals("")
+									|| timerLog.getTask().toLowerCase().equals("null")) {
+								task = "<No Task>";
+							} else {
+								task = timerLog.getTask();
+							}
+
+							Long current = tmpResults.get(task);
+							if (current == null) {
+								current = 0l;
+							}
+
+							current += (timerLog.getEnd().getTime() - timerLog.getStart().getTime()) / 1000;
+							tmpResults.put(task, current);
+						}
+					}
+				}
+
+				for (Map.Entry<String, Long> entry : tmpResults.entrySet()) {
+					result.add(new TimerTaskReport(entry.getKey(), entry.getValue()));
 				}
 			} catch (IOException e) {
 				throw new BadLogFileException();

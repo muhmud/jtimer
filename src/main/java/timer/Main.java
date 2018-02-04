@@ -39,11 +39,13 @@ public final class Main {
 		Go(new Option("g", "go", true, "Starts the timer for the specified task")),
 		Stop(new Option("s", "stop", false, "Stops the timer")),
 		Pause(new Option("p", "pause", false, "Pauses the timer")),
-		Continue(new Option("i", "continue", false, "Resumes the timer with the last used task")),
+		Continue(OptionFactory.create("i", "continue", 1, true,
+				"Resumes the timer with the last used task or a new task")),
 		Check(new Option("c", "check", false, "Checks the current status of the timer")),
 		Summary(OptionFactory.create("r", "summary", 2, true, "Generates a summary by day for a date range")),
 		Detail(OptionFactory.create("d", "detail", 2, true,
 				"Generates a detailed report by day for a date range")),
+		Task(OptionFactory.create("a", "task", 2, true, "Generates a by task report for the date range")),
 		Status(new Option("t", "status", false, "Status of the timer")),
 		Directory(new Option("y", "directory", true, "Project directory"));
 
@@ -52,12 +54,13 @@ public final class Main {
 	}
 
 	private static final String CMDLINE_SYNTAX =
-			"timer [-y <directory>] [-g <task> | -s | -p | -i | -c | -r <start> <end> | -t | -d <start> <end>]";
-	private static final Options CMDLINE_OPTIONS = new Options().addOption(Command.Go.getOption())
-			.addOption(Command.Stop.getOption()).addOption(Command.Pause.getOption())
-			.addOption(Command.Continue.getOption()).addOption(Command.Check.getOption())
-			.addOption(Command.Summary.getOption()).addOption(Command.Detail.getOption())
-			.addOption(Command.Status.getOption()).addOption(Command.Directory.getOption());
+			"timer [-y <directory>] [-g <task> | -s | -p | -i <task> | -c | -r <start> <end> | -t | -d <start> <end>] | -a <start> <end>";
+	private static final Options CMDLINE_OPTIONS =
+			new Options().addOption(Command.Go.getOption()).addOption(Command.Stop.getOption())
+					.addOption(Command.Pause.getOption()).addOption(Command.Continue.getOption())
+					.addOption(Command.Check.getOption()).addOption(Command.Summary.getOption())
+					.addOption(Command.Detail.getOption()).addOption(Command.Task.getOption())
+					.addOption(Command.Status.getOption()).addOption(Command.Directory.getOption());
 
 	private static void error(String msg) {
 		System.err.println(msg);
@@ -65,7 +68,7 @@ public final class Main {
 	}
 
 	private static void printHelp() {
-		new HelpFormatter().printHelp(100, CMDLINE_SYNTAX, null, CMDLINE_OPTIONS, null, false);
+		new HelpFormatter().printHelp(115, CMDLINE_SYNTAX, null, CMDLINE_OPTIONS, null, false);
 		System.exit(0);
 	}
 
@@ -94,7 +97,7 @@ public final class Main {
 		final Option option = new MutuallyExclusiveOptionChecker().check(commandLine, Command.Go.getOption(),
 				Command.Stop.getOption(), Command.Pause.getOption(), Command.Continue.getOption(),
 				Command.Check.getOption(), Command.Summary.getOption(), Command.Detail.getOption(),
-				Command.Status.getOption());
+				Command.Task.getOption(), Command.Status.getOption());
 		if (option == null) {
 			return null;
 		}
@@ -107,7 +110,7 @@ public final class Main {
 			case "s":
 				return new Main(Command.Stop, directory);
 			case "i":
-				return new Main(Command.Continue, directory);
+				return new Main(Command.Continue, getArg(commandLine, option), directory);
 			case "p":
 				return new Main(Command.Pause, directory);
 			case "c":
@@ -116,6 +119,8 @@ public final class Main {
 				return new Main(Command.Summary, getArgs(commandLine, option, 2), directory);
 			case "d":
 				return new Main(Command.Detail, getArgs(commandLine, option, 2), directory);
+			case "a":
+				return new Main(Command.Task, getArgs(commandLine, option, 2), directory);
 			case "t":
 				return new Main(Command.Status, directory);
 			}
@@ -198,7 +203,7 @@ public final class Main {
 				timer.pause();
 				break;
 			case Continue:
-				timer.resume();
+				timer.resume(timerApp.getParameter());
 				break;
 			case Check:
 				System.out.println(timer.check().name());
@@ -211,6 +216,11 @@ public final class Main {
 			case Detail: {
 				final DateRange dateRange = timerApp.getDateRangeParameter();
 				print(timer.detail(dateRange.getStart(), dateRange.getEnd()));
+				break;
+			}
+			case Task: {
+				final DateRange dateRange = timerApp.getDateRangeParameter();
+				print(timer.task(dateRange.getStart(), dateRange.getEnd()));
 				break;
 			}
 			case Status:
