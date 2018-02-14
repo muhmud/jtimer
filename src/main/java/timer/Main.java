@@ -3,6 +3,7 @@ package timer;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 
@@ -34,6 +35,7 @@ public final class Main {
 	private static final String CURRENT_DIRECTORY = Paths.get(".").toAbsolutePath().normalize().toString();
 
 	private static final String DATE_FORMAT = "yyyy-MM-dd";
+	private static final String MONTH_FORMAT = "MMMM";
 
 	@AllArgsConstructor(access = AccessLevel.PRIVATE)
 	private enum Command {
@@ -152,18 +154,48 @@ public final class Main {
 	private DateRange getDateRangeParameter() {
 		Date start = null, end = null;
 		if (parameters != null && parameters.length > 0) {
-			final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-			try {
-				start = dateFormat.parse(parameters[0]);
-				if (parameters.length > 1) {
-					end = dateFormat.parse(parameters[1]);
+			// Check for a month shortcut
+			if (parameters.length == 2) {
+				final SimpleDateFormat monthFormat = new SimpleDateFormat(MONTH_FORMAT);
+				try {
+					// Parse the month name
+					start = monthFormat.parse(parameters[0]);
+
+					// Parse the year
+					final int year = Integer.parseInt(parameters[1]);
+
+					// Set the year
+					final Calendar calendar = Calendar.getInstance();
+					calendar.setTime(start);
+					calendar.set(Calendar.YEAR, year);
+
+					start = calendar.getTime();
+
+					// Find end date
+					calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+					end = calendar.getTime();
+				} catch (ParseException | NumberFormatException e) {
+					// Might not be a month shortcut
+					start = null;
+					end = null;
 				}
-			} catch (ParseException e) {
-				error("Start/End dates must be in yyyy-MM-dd format");
 			}
 
-			if (start != null && end != null && start.getTime() > end.getTime()) {
-				error("Start/End dates are wrong way round");
+			if (start == null && end == null) {
+				// Process a regular date range
+				final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+				try {
+					start = dateFormat.parse(parameters[0]);
+					if (parameters.length > 1) {
+						end = dateFormat.parse(parameters[1]);
+					}
+				} catch (ParseException e) {
+					error("Start/End dates must be in yyyy-MM-dd format");
+				}
+
+				if (start != null && end != null && start.getTime() > end.getTime()) {
+					error("Start/End dates are wrong way round");
+				}
 			}
 		}
 
