@@ -39,6 +39,16 @@ public final class Timer {
 	@Getter
 	private final String statusDirectory;
 
+	private static boolean isValidFile(String filePath) {
+		if (filePath != null) {
+			final File file = new File(filePath);
+
+			return file.exists() && file.isFile();
+		}
+
+		return false;
+	}
+
 	private String logFilePath(boolean find) {
 		String logFilePath = Paths.get(directory, LOG_FILE).toString();
 
@@ -55,7 +65,7 @@ public final class Timer {
 			}
 		}
 
-		return logFilePath;
+		return isValidFile(logFilePath) ? logFilePath : Paths.get(directory, LOG_FILE).toString();
 	}
 
 	private String logFilePath() {
@@ -78,7 +88,7 @@ public final class Timer {
 
 	private TimerLog latestTimerLog() throws BadLogFileException {
 		final String logFilePath = logFilePath(true);
-		if (logFilePath != null) {
+		if (isValidFile(logFilePath)) {
 			String logLine;
 			try (final ReversedLinesFileReader reader =
 					new ReversedLinesFileReader(new File(logFilePath), StandardCharsets.UTF_8)) {
