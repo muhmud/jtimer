@@ -190,7 +190,7 @@ public final class Main {
 						end = dateFormat.parse(parameters[1]);
 					}
 				} catch (ParseException e) {
-					error("Start/End dates must be in yyyy-MM-dd format");
+					error("Start/End dates must be in yyyy-MM-dd format or as <month> <year>");
 				}
 
 				if (start != null && end != null && start.getTime() > end.getTime()) {
