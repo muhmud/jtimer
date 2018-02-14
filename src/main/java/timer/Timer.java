@@ -54,7 +54,7 @@ public final class Timer {
 
 		if (find) {
 			String directory = this.directory;
-			while (!new File(logFilePath).exists()) {
+			while (!isValidFile(logFilePath)) {
 				directory = new File(directory).getParent();
 				if (directory == null) {
 					logFilePath = null;
