@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import timer.exception.BadLogFileException;
 import timer.exception.BadStatusFileException;
+import timer.exception.BadTaskNameException;
 import timer.exception.NoTaskSpecifiedException;
 import timer.exception.OtherTimerException;
 import timer.exception.TimerAlreadyRunningException;
@@ -121,15 +122,17 @@ public final class Timer {
 				String line;
 				while ((line = reader.readLine()) != null) {
 					final TimerLog timerLog = TimerLog.parse(line);
-					if (timerLog.getAnchor().equals(anchor)) {
-						if (timerLog.getStart() == null) {
-							throw new BadLogFileException();
+					if (timerLog != null) {
+						if (timerLog.getAnchor().equals(anchor)) {
+							if (timerLog.getStart() == null) {
+								throw new BadLogFileException();
+							}
+							if (timerLog.getEnd() != null) {
+								result += timerLog.getEnd().getTime() - timerLog.getStart().getTime();
+							}
+						} else {
+							break;
 						}
-						if (timerLog.getEnd() != null) {
-							result += timerLog.getEnd().getTime() - timerLog.getStart().getTime();
-						}
-					} else {
-						break;
 					}
 				}
 			} catch (IOException e) {
@@ -140,10 +143,14 @@ public final class Timer {
 		return result;
 	}
 
-	public void start(String task, boolean resume) throws NoTaskSpecifiedException, BadLogFileException,
-			BadStatusFileException, TimerAlreadyRunningException, OtherTimerException {
+	public void start(String task, boolean resume) throws NoTaskSpecifiedException, BadTaskNameException,
+			BadLogFileException, BadStatusFileException, TimerAlreadyRunningException, OtherTimerException {
 		if (task == null || task.trim().length() == 0) {
 			throw new NoTaskSpecifiedException();
+		}
+
+		if (task.contains(",")) {
+			throw new BadTaskNameException();
 		}
 
 		// Find the latest timer log entry
@@ -222,7 +229,7 @@ public final class Timer {
 				latestTimerLog.getStart(), end);
 	}
 
-	public void resume(String task) throws BadLogFileException, TimerAlreadyRunningException,
+	public void resume(String task) throws BadLogFileException, BadTaskNameException, TimerAlreadyRunningException,
 			NoTaskSpecifiedException, BadStatusFileException, OtherTimerException {
 		// Find the latest timer log entry
 		final TimerLog latestTimerLog = latestTimerLog();

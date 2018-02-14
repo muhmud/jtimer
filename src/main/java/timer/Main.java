@@ -18,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import timer.exception.BadLogFileException;
 import timer.exception.BadStatusFileException;
+import timer.exception.BadTaskNameException;
 import timer.exception.NoTaskSpecifiedException;
 import timer.exception.OtherTimerException;
 import timer.exception.TimerAlreadyRunningException;
@@ -244,6 +245,8 @@ public final class Main {
 			error("The timer is not running");
 		} catch (NoTaskSpecifiedException e) {
 			error("You need to specify a task");
+		} catch (BadTaskNameException e) {
+			error("Task name contains invalid characters");
 		}
 	}
 }

@@ -15,6 +15,7 @@ public final class TimerLog {
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS Z";
 	private static final String LINE_FORMAT = "%s,%s,%s,%s\n";
 	private static final String NULL = "null";
+	private static final String FIELD_SEPARATOR = ",";
 
 	private static Date parseDate(SimpleDateFormat dateFormat, String date) throws ParseException {
 		if (date == null || date.toLowerCase().equals(NULL) || date.trim().length() == 0) {
@@ -38,7 +39,7 @@ public final class TimerLog {
 
 	public static TimerLog parse(String logLine) throws BadLogFileException {
 		if (logLine != null && logLine.trim().length() > 0) {
-			final String[] parts = logLine.split(",");
+			final String[] parts = logLine.split(FIELD_SEPARATOR);
 			if (parts.length != 4) {
 				throw new BadLogFileException();
 			}
