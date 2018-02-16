@@ -155,30 +155,33 @@ public final class Main {
 		Date start = null, end = null;
 		if (parameters != null && parameters.length > 0) {
 			// Check for a month shortcut
-			if (parameters.length == 2) {
-				final SimpleDateFormat monthFormat = new SimpleDateFormat(MONTH_FORMAT);
-				try {
-					// Parse the month name
-					start = monthFormat.parse(parameters[0]);
+			final SimpleDateFormat monthFormat = new SimpleDateFormat(MONTH_FORMAT);
+			try {
+				// Parse the month name
+				start = monthFormat.parse(parameters[0]);
 
-					// Parse the year
-					final int year = Integer.parseInt(parameters[1]);
-
-					// Set the year
-					final Calendar calendar = Calendar.getInstance();
-					calendar.setTime(start);
-					calendar.set(Calendar.YEAR, year);
-
-					start = calendar.getTime();
-
-					// Find end date
-					calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-					end = calendar.getTime();
-				} catch (ParseException | NumberFormatException e) {
-					// Might not be a month shortcut
-					start = null;
-					end = null;
+				// Parse the year
+				final int year;
+				if (parameters.length > 1) {
+					year = Integer.parseInt(parameters[1]);
+				} else {
+					year = Calendar.getInstance().get(Calendar.YEAR);
 				}
+
+				// Set the year
+				final Calendar calendar = Calendar.getInstance();
+				calendar.setTime(start);
+				calendar.set(Calendar.YEAR, year);
+
+				start = calendar.getTime();
+
+				// Find end date
+				calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+				end = calendar.getTime();
+			} catch (ParseException | NumberFormatException e) {
+				// Might not be a month shortcut
+				start = null;
+				end = null;
 			}
 
 			if (start == null && end == null) {
